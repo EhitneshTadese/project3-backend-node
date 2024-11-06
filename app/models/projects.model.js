@@ -1,38 +1,38 @@
 // app/models/resume.model.js
-const User = require('./user.model');
+const User = require('./resume.model');
 module.exports = (sequelize, Sequelize) => {
-  const Resume = sequelize.define("resume", {
-    resume_id: {
+  const Projects = sequelize.define("project", {
+    project_id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true,
     },
-    user_id: {
+    resume_id: {
             type: Sequelize.INTEGER,
             allowNull: false,
             references: {
-                model: 'users',    
-                key: 'user_id',          
+                model: 'resumes',    
+                key: 'resume_id',          
             },
             onDelete: 'CASCADE',    
             onUpdate: 'CASCADE',    
         },
   
 
-    resume_name: {
+    project_name: {
       type: Sequelize.STRING,
       
     },
-    template_type: {
-      type: Sequelize.STRING,
-    },
-    intro_paragraph: {
+    description: {
       type: Sequelize.TEXT,
+    },
+    project_link: {
+      type: Sequelize.STRING,
     
     }
  
 
   });
 
-  return Resume;
+  return Projects;
 };
