@@ -1,148 +1,87 @@
-const db = require("../models");
-const Resume = db.resume;
-const Op = db.Sequelize.Op
+// controllers/resume.controller.js
 
-// Create and Save a new Resume
-exports.create = (req, res) => {
+const db = require("../models");
+const Resume = db.Resume;
+const Education = db.Education;
+const Experience = db.Experience;
+const Project = db.Projects;
+const Skill = db.Skill;
+const Award = db.Awards;
+
+// Create and Save a new Resume with associated data
+exports.create = async (req, res) => {
   // Validate request
-  if (!req.body.title) {
+  if (!req.body.resume_name) {
     res.status(400).send({
-      message: "Content can not be empty!",
+      message: "Content cannot be empty!",
     });
     return;
   }
 
-  // Create a Resume              
+  // Resume data structure
   const resume = {
-    title: req.body.title,
-    description: req.body.description,
-    published: req.body.published ? req.body.published : false,
+    user_id: 1,
+    resume_name: req.body.resume_name,
+    template_type: req.body.template_type,
+    intro_paragraph: req.body.intro_paragraph
+   
+    
   };
 
-  // Save Resume in the database    
-  Resume.create(resume)
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Some error occurred while creating the Resume.",
-      });
+  try {
+    // Save Resume
+    const newResume = await Resume.create(resume);
+
+    // Bulk insert associated Education records if provided
+    if (req.body.education && req.body.education.length > 0) {
+      const educationData = req.body.education.map((edu) => ({
+        ...edu,
+        resumeId: newResume.id,
+      }));
+      await Education.bulkCreate(educationData);
+    }
+
+    // Bulk insert associated Experience records if provided
+    if (req.body.experience && req.body.experience.length > 0) {
+      const experienceData = req.body.experience.map((exp) => ({
+        ...exp,
+        resumeId: newResume.id,
+      }));
+      await Experience.bulkCreate(experienceData);
+    }
+
+    // Bulk insert associated Project records if provided
+    if (req.body.projects && req.body.projects.length > 0) {
+      const projectData = req.body.projects.map((proj) => ({
+        ...proj,
+        resumeId: newResume.id,
+      }));
+      await Project.bulkCreate(projectData);
+    }
+
+    // Bulk insert associated Skill records if provided
+    if (req.body.skills && req.body.skills.length > 0) {
+      const skillData = req.body.skills.map((skill) => ({
+        name: skill.name,
+        resumeId: newResume.id,
+      }));
+      await Skill.bulkCreate(skillData);
+    }
+
+    // Bulk insert associated Award records if provided
+    if (req.body.awards && req.body.awards.length > 0) {
+      const awardData = req.body.awards.map((award) => ({
+        ...award,
+        resumeId: newResume.id,
+      }));
+      await Award.bulkCreate(awardData);
+    }
+
+    res.send({ message: "Resume created successfully!", data: newResume });
+  } catch (err) {
+    console.error("Error creating resume:", err);
+    res.status(500).send({
+      message: err.message || "Some error occurred while creating the Resume.",
     });
-};
-
-// Retrieve all Resumes from the database.
-exports.findAll = (req, res) => {
-  const title = req.query.title;
-  const condition = title ? { title: { [Op.like]: `%${title}%` } } : null;
-
-  Resume.findAll({ where: condition })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Some error occurred while retrieving resume.",
-      });
-    });
-};
-
-// Find a single Resume with an id
-exports.findOne = (req, res) => {
-  const id = req.params.id;
-
-  Resume.findByPk(id)
-    .then((data) => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Cannot find R with id=${id}.`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Error retrieving Resume with id=" + id,
-      });
-    });
-};
-
-// Update a Resume by the id in the request
-exports.update = (req, res) => {
-  const id = req.params.id;
-
-  Resume.update(req.body, {
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Resume was updated successfully.",
-        });
-      } else {
-        res.send({
-          message: `Cannot update Resume with id=${id}. Maybe Resume was not found or req.body is empty!`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Error updating Resume with id=" + id,
-      });
-    });
-};
-
-// Delete a Resume with the specified id in the request
-exports.delete = (req, res) => {
-  const id = req.params.id;
-
-  Resume.destroy({
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Resume was deleted successfully!",
-        });
-      } else {
-        res.send({
-          message: `Cannot delete Resume with id=${id}. Maybe Resume was not found!`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Could not delete Resume with id=" + id,
-      });
-    });
-};
-
-// Delete all Resumes from the database.
-exports.deleteAll = (req, res) => {
-  Resume.destroy({
-    where: {},
-    truncate: false,
-  })
-    .then((nums) => {
-      res.send({ message: `${nums} Resumes were deleted successfully!` });
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Some error occurred while removing all tesumes.",
-      });
-    });
-};
-
-// Find all published Resumes
-exports.findAllPublished = (req, res) => {
-  Resume.findAll({ where: { published: true } })
-    .then((data) => {
-      res.send(data);
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Some error occurred while retrieving published resumes.",
-      });
-    });
+  }
 };
