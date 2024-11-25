@@ -3,26 +3,39 @@ module.exports = (app) => {
   
   var router = require("express").Router();
 
+  //route for fetching all users 
+  router.get("/users", resumes.findAllUsers);
+
   // Create a new Resumes
   router.post("/create", resumes.create);
 
-  // Retrieve all Resumes
-  router.get("/", resumes.findAll);
 
-  // Retrieve all published Resumes 
-  router.get("/published", resumes.findAllPublished);
-
-  // Retrieve a single Resume with id
+  // Route to fetch resumes for a specific user
+  router.get("/user_resumes", resumes.getUserResumes);
+  
+  // Fetch a single resume
   router.get("/:id", resumes.findOne);
 
+  // Update a resume
+  router.put("/:id", resumes.update);
+
+  // Retrieve all Resumes
+  //router.get("/", resumes.findAll);
+
+  // Retrieve all published Resumes 
+  //router.get("/published", resumes.findAllPublished);
+
+  // Retrieve a single Resume with id
+  //router.get("/:id", resumes.findOne);
+
   // Update a Resume with id
-  router.put("/:id",resumes.update);
+  //router.put("/:id",resumes.update);
 
   // Delete a Resume with id
-  router.delete("/:id", resumes.delete);
+  //router.delete("/:id", resumes.delete);
 
   // Create a new Resumes
-  router.delete("/", resumes.deleteAll);
+  //router.delete("/", resumes.deleteAll);
 
   app.use("/api/resumes", router);
 };

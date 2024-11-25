@@ -1,15 +1,34 @@
 // controllers/resume.controller.js
 
 const db = require("../models");
-const Resume = db.Resume;
-const Education = db.Education;
-const Experience = db.Experience;
-const Project = db.Projects;
-const Skill = db.Skill;
-const Award = db.Awards;
+const Resume = db.resume;
+const Education = db.education;
+const Experience = db.experience;
+const Project = db.project;
+const Skill = db.skill;
+const Award = db.award;
+const User = db.user;
+
+// Retrieve all Users from the database
+exports.findAllUsers = (req, res) => {
+  User.findAll() // Fetch all records from the User table
+    .then((data) => {
+      res.send(data); // Send the retrieved data as the response
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message:
+          err.message || "Some error occurred while retrieving users.",
+      });
+    });
+};
+
 
 // Create and Save a new Resume with associated data
 exports.create = async (req, res) => {
+    try {
+const { resume_name, template_type, intro_paragraph, education, experience, project, skills, awards } = req.body;
+
   // Validate request
   if (!req.body.resume_name) {
     res.status(400).send({
@@ -18,70 +37,110 @@ exports.create = async (req, res) => {
     return;
   }
 
-  // Resume data structure
-  const resume = {
-    user_id: 1,
-    resume_name: req.body.resume_name,
-    template_type: req.body.template_type,
-    intro_paragraph: req.body.intro_paragraph
+
+  // Create Resume associated with the User
+    const resume = await Resume.create({
+      user_id: 1, // 
+      resume_name,
+      template_type,
+      intro_paragraph,
+    });
+
+ // Create Education records
+    if (education) {
+      await Education.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...education,
+      });
+    }
+
+    // Create Experience records
+    if (experience) {
+      await Experience.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...experience,
+      });
+      }
+      
+      // Create project records
+    if (project) {
+      await Project.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...project,
+      });
+      }
+      
+
+    // Create award records
+    if (awards) {
+      await Award.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...awards,
+      });
+    }
+
+    res.status(201).send({ message: "User, Resume, and related data created successfully!" });
+
    
-    
-  };
-
-  try {
-    // Save Resume
-    const newResume = await Resume.create(resume);
-
-    // Bulk insert associated Education records if provided
-    if (req.body.education && req.body.education.length > 0) {
-      const educationData = req.body.education.map((edu) => ({
-        ...edu,
-        resumeId: newResume.id,
-      }));
-      await Education.bulkCreate(educationData);
-    }
-
-    // Bulk insert associated Experience records if provided
-    if (req.body.experience && req.body.experience.length > 0) {
-      const experienceData = req.body.experience.map((exp) => ({
-        ...exp,
-        resumeId: newResume.id,
-      }));
-      await Experience.bulkCreate(experienceData);
-    }
-
-    // Bulk insert associated Project records if provided
-    if (req.body.projects && req.body.projects.length > 0) {
-      const projectData = req.body.projects.map((proj) => ({
-        ...proj,
-        resumeId: newResume.id,
-      }));
-      await Project.bulkCreate(projectData);
-    }
-
-    // Bulk insert associated Skill records if provided
-    if (req.body.skills && req.body.skills.length > 0) {
-      const skillData = req.body.skills.map((skill) => ({
-        name: skill.name,
-        resumeId: newResume.id,
-      }));
-      await Skill.bulkCreate(skillData);
-    }
-
-    // Bulk insert associated Award records if provided
-    if (req.body.awards && req.body.awards.length > 0) {
-      const awardData = req.body.awards.map((award) => ({
-        ...award,
-        resumeId: newResume.id,
-      }));
-      await Award.bulkCreate(awardData);
-    }
-
-    res.send({ message: "Resume created successfully!", data: newResume });
+   
   } catch (err) {
     console.error("Error creating resume:", err);
     res.status(500).send({
       message: err.message || "Some error occurred while creating the Resume.",
     });
+  }
+};
+
+
+
+// Get resumes for a specific user (hardcoded for testing)
+exports.getUserResumes = async (req, res) => {
+  try {
+    const userId = 1; // Hardcoded user ID for testing purposes
+
+    const resumes = await Resume.findAll({
+      where: { user_id: userId },
+      attributes: ["user_id", "resume_id", "resume_name", "template_type"], // Specify the fields you want to return
+    });
+
+    res.status(200).send(resumes);
+  } catch (err) {
+    console.error("Error retrieving user resumes:", err); // Log error for debugging
+    res.status(500).send({
+      message: err.message || "Some error occurred while retrieving user resumes.",
+    });
+  }
+};
+
+
+
+
+// Fetch a single resume by ID
+exports.findOne = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const resume = await Resume.findByPk(id);
+    if (resume) {
+      res.send(resume);
+    } else {
+      res.status(404).send({ message: "Resume with id=${id}  not found. "});
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Error retrieving resume with id=" + id });
+  }
+};
+
+// Update a resume by ID
+exports.update = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const updated = await Resume.update(req.body, { where: { id } });
+    if (updated == 1) {
+      res.send({ message: "Resume updated successfully." });
+    } else {
+      res.send({ message: `Cannot update resume with id=${id}. Maybe it was not found. `});
+    }
+  } catch (error) {
+    res.status(500).send({ message: "Error updating resume with id=" + id });
   }
 };
