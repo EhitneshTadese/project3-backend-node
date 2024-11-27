@@ -1,28 +1,58 @@
-const express = require("express");
-const cors = require("cors");
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const passport = require('passport');
+const session = require('express-session');
+const GoogleStrategy = require('passport-google-oauth20').Strategy; 
 const app = express();
-var corsOptions = {
-  origin: "http://localhost:3001"
-};
-app.use(cors(corsOptions));
-// parse requests of content-type - application/json
-app.use(express.json());
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
-// set up database 
-const db = require("./app/models");
-db.sequelize.sync();
-// for devel to recreate each time database 
-// db.sequelize.sync({ force: true }).then(() => {
-//   console.log("Drop and re-sync db.");
-// });
-// simple route
-app.get("/", (req, res) => {
-  res.json({ message: "Welcome to bezkoder application." });
+app.use(
+  session({
+    secret:"secret",
+    resave: false,
+    saveUninitialized: true
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: 'http://localhost:3000/auth/google/callback',
+},
+(accessToken, refreshToken,profile,done) =>{
+  return done(null,profile);
+}
+));
+
+passport.serializeUser((user,done) => done(null,user));
+passport.deserializeUser((user,done)=> done(null,user));
+
+app.get('/',(req,res) => {
+  res.send("<a href='/auth/google'>Login with Google</a>");
 });
-require("./app/routes/resume.routes")(app);
-// set port, listen for requests
-const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}.`);
+
+app.get("/auth/google",passport.authenticate('google',{scope:["profile","email"]})
+
+);
+
+
+app.get("/auth/google/callback",passport.authenticate('google',{failureRedirect:"/"}), (req,res) =>{
+  res.redirect('/profile')
+})
+
+app.get("/profile",(req,res)=>{
+  res.send(`Welcome ${req.user.displayName}`);
+});
+
+app.get("/logout",(req,res)=>{
+  req.logout(()=>{
+    res.redirect("/");
+  });
+  
+});
+
+app.listen(3000,()=>{
+  console.log('server is running at port 3000');
 });
