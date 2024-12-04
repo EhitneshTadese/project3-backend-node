@@ -7,6 +7,7 @@ const Experience = db.experience;
 const Project = db.project;
 const Skill = db.skill;
 const Award = db.award;
+const Interest = db.interest;
 const User = db.user;
 
 // Retrieve all Users from the database
@@ -27,7 +28,7 @@ exports.findAllUsers = (req, res) => {
 // Create and Save a new Resume with associated data
 exports.create = async (req, res) => {
     try {
-const { resume_name, template_type, intro_paragraph, education, experience, project, skills, awards } = req.body;
+const { resume_name, template_type, intro_paragraph, education, experience, project, skills, interests, awards } = req.body;
 
   // Validate request
   if (!req.body.resume_name) {
@@ -70,6 +71,21 @@ const { resume_name, template_type, intro_paragraph, education, experience, proj
       });
       }
       
+       // Create skill records
+    if (skills) {
+      await Skill.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...skills,
+      });
+      }
+
+       // Create interest records
+    if (interests) {
+      await Interest.create({
+        resume_id: resume.resume_id, // Assuming foreign key
+        ...interests,
+      });
+      }
 
     // Create award records
     if (awards) {
@@ -112,35 +128,143 @@ exports.getUserResumes = async (req, res) => {
   }
 };
 
+//fetch a resume with associiated table
 
-
-
-// Fetch a single resume by ID
 exports.findOne = async (req, res) => {
-  const id = req.params.id;
   try {
-    const resume = await Resume.findByPk(id);
-    if (resume) {
-      res.send(resume);
-    } else {
-      res.status(404).send({ message: "Resume with id=${id}  not found. "});
+    const resume_id = req.params.id;
+
+    const resume = await Resume.findByPk(resume_id, {
+      include: [
+        { model: Education },
+        { model: Experience },
+        { model: Project },
+        { model: Skill },
+        { model: Interest },
+        { model: Award },
+      ],
+    });
+
+    if (!resume) {
+      return res.status(404).send({ message: "Resume not found" });
     }
+
+    res.status(200).send(resume);
   } catch (error) {
-    res.status(500).send({ message: "Error retrieving resume with id=" + id });
+    console.error("Error fetching resume:", error);
+    res.status(500).send({
+      message: error.message || "Error retrieving the resume",
+    });
   }
 };
 
-// Update a resume by ID
+// Update an existing Resume and its associated data
 exports.update = async (req, res) => {
-  const id = req.params.id;
   try {
-    const updated = await Resume.update(req.body, { where: { id } });
-    if (updated == 1) {
-      res.send({ message: "Resume updated successfully." });
-    } else {
-      res.send({ message: `Cannot update resume with id=${id}. Maybe it was not found. `});
+    const { id } = req.params; // Extract resume_id from the request params
+    const { resume_name, template_type, intro_paragraph, education, experience, project, skills, interests, awards } = req.body;
+
+    // Validate request
+    if (!resume_name) {
+      return res.status(400).send({ message: "Resume name cannot be empty!" });
     }
-  } catch (error) {
-    res.status(500).send({ message: "Error updating resume with id=" + id });
+
+    // Find the resume by id
+    const resume = await Resume.findByPk(id);
+    if (!resume) {
+      return res.status(404).send({ message: "Resume not found" });
+    }
+
+    // Update the Resume
+    await resume.update({
+      resume_name,
+      template_type,
+      intro_paragraph,
+    });
+
+    // Update or Create Education
+    if (education) {
+      const existingEducation = await Education.findOne({ where: { resume_id: id } });
+      if (existingEducation) {
+        await existingEducation.update(education);
+      } else {
+        await Education.create({
+          resume_id: id,
+          ...education,
+        });
+      }
+    }
+
+    // Update or Create Experience
+    if (experience) {
+      const existingExperience = await Experience.findOne({ where: { resume_id: id } });
+      if (existingExperience) {
+        await existingExperience.update(experience);
+      } else {
+        await Experience.create({
+          resume_id: id,
+          ...experience,
+        });
+      }
+    }
+
+    // Update or Create Project
+    if (project) {
+      const existingProject = await Project.findOne({ where: { resume_id: id } });
+      if (existingProject) {
+        await existingProject.update(project);
+      } else {
+        await Project.create({
+          resume_id: id,
+          ...project,
+        });
+      }
+    }
+
+    // Update or Create Skills
+    if (skills) {
+      const existingSkills = await Skill.findOne({ where: { resume_id: id } });
+      if (existingSkills) {
+        await existingSkills.update(skills);
+      } else {
+        await Skill.create({
+          resume_id: id,
+          ...skills,
+        });
+      }
+    }
+
+    // Update or Create Interests
+    if (interests) {
+      const existingInterests = await Interest.findOne({ where: { resume_id: id } });
+      if (existingInterests) {
+        await existingInterests.update(interests);
+      } else {
+        await Interest.create({
+          resume_id: id,
+          ...interests,
+        });
+      }
+    }
+
+    // Update or Create Awards
+    if (awards) {
+      const existingAwards = await Award.findOne({ where: { resume_id: id } });
+      if (existingAwards) {
+        await existingAwards.update(awards);
+      } else {
+        await Award.create({
+          resume_id: id,
+          ...awards,
+        });
+      }
+    }
+
+    res.status(200).send({ message: "Resume and associated data updated successfully!" });
+  } catch (err) {
+    console.error("Error updating resume:", err);
+    res.status(500).send({
+      message: err.message || "Some error occurred while updating the Resume.",
+    });
   }
 };

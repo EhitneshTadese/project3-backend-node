@@ -27,6 +27,8 @@ db.experience = require("./experience.model.js")(sequelize, Sequelize);
 db.skill = require("./skill.model.js")(sequelize, Sequelize);
 db.project = require("./projects.model.js")(sequelize, Sequelize);
 db.award = require("./awards.model.js")(sequelize, Sequelize);
+db.interest= require("./interest.model.js")(sequelize, Sequelize);
+
 
 
 module.exports = db;
