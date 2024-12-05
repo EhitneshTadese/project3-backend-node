@@ -1,10 +1,39 @@
-require('dotenv').config();
-const express = require('express');
-const cors = require('cors');
-const passport = require('passport');
-const session = require('express-session');
-const GoogleStrategy = require('passport-google-oauth20').Strategy; 
+//require('dotenv').config();
+import dotenv from 'dotenv'
+dotenv.config()
+
+import {getUser, getUsers, createUser} from './database.js'
+
+import express from 'express';
+import cors from 'cors';
+
+//Google authentication stuff
+import passport from 'passport';
+import session from 'express-session';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+
+//Database
+import {db} from './app/config/db.config.js';
+
+
+import { gigRouter} from './app/routes/gigs.routes.js';
+import {awardsRouter} from './app/routes/awards.routes.js';
+import {projectsRouter} from './app/routes/projects.routes.js';
+
+
+try{
+  await db.authenticate();
+  console.log('Connection has been established successfully');
+
+}
+catch(error){
+  console.error('Unable to connect to the database:', error);
+}
+
+
 const app = express();
+
+app.use(express.json())
 app.use(
   session({
     secret:"secret",
@@ -53,6 +82,35 @@ app.get("/logout",(req,res)=>{
   
 });
 
+// app.get("/Users",async(req,res)=>{
+//   const users = await getUsers()
+//   res.send(users)
+// })
+
+// app.get("/Users/:id",async(req,res)=>{
+//   const id = req.params.id
+//   const user = await getUser(id)
+//   res.send(user)
+// })
+
+// app.post("/Users",async(req,res)=>{
+//   const {name,email} = req.body
+//   const user = await createUser(name,email)
+//   res.status(201).send(user)
+// })
+
 app.listen(3000,()=>{
   console.log('server is running at port 3000');
+});
+
+
+// actual app functionalities
+app.use('/gigs',gigRouter);
+app.use('/awards',awardsRouter);
+app.use('/projects', projectsRouter);
+
+
+app.use((err,req,res,next)=>{
+  console.error(err.stack)
+  res.status(500).send('Something broke!')
 });
