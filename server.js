@@ -55,10 +55,18 @@ passport.use(new GoogleStrategy({
   clientSecret: process.env.GOOGLE_CLIENT_SECRET,
   callbackURL: 'http://localhost:3000/auth/google/callback',
 },
-(accessToken, refreshToken,profile,done) =>{
-  return done(null,profile);
-}
-));
+
+(accessToken, refreshToken, profile, done) => {
+  console.log("Access Token:", accessToken);
+  console.log("Profile:", profile);
+  
+  if (!profile) {
+    console.error("Authentication failed: No profile received.");
+    return done(new Error("Authentication failed: No profile received."), null);
+  }
+  
+  return done(null, profile);
+}));
 
 passport.serializeUser((user,done) => done(null,user));
 passport.deserializeUser((user,done)=> done(null,user));
@@ -72,19 +80,23 @@ app.get("/auth/google",passport.authenticate('google',{scope:["profile","email"]
 );
 
 
-app.get("/auth/google/callback",passport.authenticate('google',{failureRedirect:"/"}), (req,res) =>{
-  res.redirect('/profile')
-})
+app.get("/auth/google/callback", passport.authenticate('google', { failureRedirect: "/" }), (req, res) => {
+  console.log("User authenticated successfully:", req.user);
+  res.redirect('/profile');
+});
 
 app.get("/profile",(req,res)=>{
   res.send(`Welcome ${req.user.displayName}`);
 });
 
-app.get("/logout",(req,res)=>{
-  req.logout(()=>{
+app.get("/logout", (req, res) => {
+  req.logout((err) => {
+    if (err) {
+      console.error("Logout error:", err);
+      return res.redirect("/");
+    }
     res.redirect("/");
   });
-  
 });
 
 // app.get("/Users",async(req,res)=>{
