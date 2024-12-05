@@ -1,15 +1,29 @@
-import { Award } from '../models/awards.model.js';
+import { Award } from '../models/awards.model.js'; // Import Award model
+import {Gig} from '../models/gig.model.js';
 
 // Create a new award
 export const createAward = (req, res) => {
-    const { name, description, recipient, date_received, certificate_link } = req.body;
+    const { gig_id, name, description, recipient, date_received, certificate_link } = req.body;
 
-    Award.create({ name, description, recipient, date_received, certificate_link })
+    // Create a new award with gig_id associated
+    Gig.findByPk(gig_id)
+    .then(gig => {
+        if (!gig) {
+            return res.status(404).send({ message: `Gig with id ${gig_id} not found.` });
+        }
+
+        // Create the project if gig_id is valid
+        Award.create({ gig_id, name, description, recipient, date_received, certificate_link })
         .then(award => res.status(201).json(award))
         .catch(err => {
             console.error('Error creating award:', err);
             res.status(500).send({ message: "Error creating award" });
         });
+    })
+    .catch(err => {
+        console.error('Error validating gig_id:', err);
+        res.status(500).send({ message: "Error validating gig_id" });
+    });
 };
 
 // Fetch all awards
@@ -50,6 +64,7 @@ export const updateAward = (req, res) => {
                 return res.status(404).send({ message: `Award with id ${id} not found.` });
             }
 
+            // Filter out null or undefined values from the fields to be updated
             const filteredFields = {};
             for (const key in updatedFields) {
                 if (updatedFields[key] !== null && updatedFields[key] !== undefined) {
@@ -92,4 +107,3 @@ export const deleteAward = (req, res) => {
             res.status(500).send({ message: `Error retrieving award with id ${id}` });
         });
 };
-

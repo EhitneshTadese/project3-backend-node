@@ -1,14 +1,33 @@
 import { Project } from '../models/projects.model.js';
+import {Gig} from '../models/gig.model.js';
 
 // Create a new project
 export const createProject = (req, res) => {
-    const { project_name, description, project_link } = req.body;
+    const { gig_id, project_name, description, project_link } = req.body;  // Ensure gig_id is passed
 
-    Project.create({  project_name, description, project_link })
-        .then(project => res.status(201).json(project))
+    
+    if (!gig_id) {
+        return res.status(400).send({ message: "gig_id is required" });
+    }
+
+    // Validate if gig_id exists in the Gig table
+    Gig.findByPk(gig_id)
+        .then(gig => {
+            if (!gig) {
+                return res.status(404).send({ message: `Gig with id ${gig_id} not found.` });
+            }
+
+            // Create the project if gig_id is valid
+            Project.create({ gig_id, project_name, description, project_link })
+                .then(project => res.status(201).json(project))
+                .catch(err => {
+                    console.error('Error creating project:', err);
+                    res.status(500).send({ message: "Error creating project" });
+                });
+        })
         .catch(err => {
-            console.error('Error creating project:', err);
-            res.status(500).send({ message: "Error creating project" });
+            console.error('Error validating gig_id:', err);
+            res.status(500).send({ message: "Error validating gig_id" });
         });
 };
 
@@ -50,6 +69,7 @@ export const updateProject = (req, res) => {
                 return res.status(404).send({ message: `Project with id ${id} not found.` });
             }
 
+            // Ensure only valid fields are updated
             const filteredFields = {};
             for (const key in updatedFields) {
                 if (updatedFields[key] !== null && updatedFields[key] !== undefined) {

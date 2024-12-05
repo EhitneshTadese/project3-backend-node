@@ -40,3 +40,5 @@ export async function createUser(name,email){
 
 //const result = await createUser('test','test')
 //console.log(result)
+
+

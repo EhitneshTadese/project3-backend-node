@@ -5,7 +5,7 @@ dotenv.config()
 import {getUser, getUsers, createUser} from './database.js'
 
 import express from 'express';
-import cors from 'cors';
+
 
 //Google authentication stuff
 import passport from 'passport';
@@ -19,6 +19,11 @@ import {db} from './app/config/db.config.js';
 import { gigRouter} from './app/routes/gigs.routes.js';
 import {awardsRouter} from './app/routes/awards.routes.js';
 import {projectsRouter} from './app/routes/projects.routes.js';
+import {skillRouter} from './app/routes/skill.routes.js';
+import {experienceRouter} from './app/routes/experience.route.js';
+import {educationRouter} from './app/routes/education.route.js';
+import { resumeRouter } from './app/routes/resume.routes.js';
+import {interestRouter} from './app/routes/interests.route.js';
 
 
 try{
@@ -108,6 +113,11 @@ app.listen(3000,()=>{
 app.use('/gigs',gigRouter);
 app.use('/awards',awardsRouter);
 app.use('/projects', projectsRouter);
+app.use('/skills',skillRouter);
+app.use('/experience',experienceRouter);
+app.use('/education',educationRouter);
+app.use('/resume',resumeRouter);
+app.use('/interest',interestRouter);
 
 
 app.use((err,req,res,next)=>{

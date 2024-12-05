@@ -1,6 +1,6 @@
 import Sequelize from 'sequelize';
 import { db } from '../config/db.config.js';
-import { Gig } from './gig.model.js'; // Assuming a Resume model exists for `resume_id` foreign key
+import { Gig } from './gig.model.js'; 
 
 export const Project = db.define('Project', {
     project_id: {
@@ -8,7 +8,18 @@ export const Project = db.define('Project', {
         primaryKey: true,
         autoIncrement: true,
     },
-    
+
+    gig_id: { 
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+            model: Gig,
+            key: 'user_id',  
+        },
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+    },
+
     project_name: {
         type: Sequelize.STRING,
     },
@@ -19,7 +30,7 @@ export const Project = db.define('Project', {
         type: Sequelize.STRING,
     },
 }, {
-    timestamps: false, // Enables `createdAt` and `updatedAt` fields
+    timestamps: false, // Disables `createdAt` and `updatedAt` fields
 });
 
 // Sync the table (remove before deploying in production)
