@@ -82,11 +82,19 @@ app.get("/auth/google",passport.authenticate('google',{scope:["profile","email"]
 
 app.get("/auth/google/callback", passport.authenticate('google', { failureRedirect: "/" }), (req, res) => {
   console.log("User authenticated successfully:", req.user);
-  res.redirect('/profile');
+  res.redirect(`http://localhost:3001/home?firstName=${req.user.name.givenName}&lastName=${req.user.name.familyName}&email=${req.user.emails[0].value}`);
 });
 
-app.get("/profile",(req,res)=>{
-  res.send(`Welcome ${req.user.displayName}`);
+app.get("/profile", (req, res) => {
+    if (!req.user) {
+        return res.status(401).send("User not authenticated");
+    }
+    // Send back the user's profile information
+    res.send({
+        displayName: req.user.displayName,
+        email: req.user.emails[0].value, // Assuming the email is in the first index
+        // Add any other user info you want to send
+    });
 });
 
 app.get("/logout", (req, res) => {
