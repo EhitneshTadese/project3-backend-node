@@ -1,0 +1,39 @@
+[
+    {
+        "name": "JohnDoe",
+        "email": "john.doe@example.com",
+        "address": "123 Main St, Springfield, IL",
+        "phone": "+1234567890",
+        "github_link": "https://github.com/johndoe",
+        "linkedin_link": "https://www.linkedin.com/in/johndoe",
+        "portfolio_link": "https://johndoe.dev"
+      }, 
+    
+      {
+        "gig_id": 1, 
+        "name": "Best Developer",
+        "description": "Awarded for excellent development skills",
+        "recipient": "John Doe",
+        "date_received": "2024-12-05",
+        "certificate_link": "http://example.com/certificate"
+    },
+
+    {
+        "gig_id": 1,
+        "project_name": "Project A",
+        "description": "A detailed description of Project A",
+        "project_link": "https://example.com/project-a"
+      },
+      {
+        "gig_id": 1,
+        "name": "Updated Best Developer of the Year",
+        "description": "Awarded for exceptional leadership and technical skills.",
+        "recipient": "John Doe",
+        "date_received": "2024-12-05T00:00:00.000Z",
+        "certificate_link": "https://example.com/certificates/updated-best-developer"
+      }
+]
+    
+
+
+  

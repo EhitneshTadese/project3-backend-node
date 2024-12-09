@@ -1,11 +1,15 @@
-module.exports = (app) => {
-  const resumes = require("../controllers/resume.controller.js");
-  
-  var router = require("express").Router();
+import express from 'express';
+import {
+    createResume,
+    getAllResumes,
+    getResumeById,
+    updateResume,
+    deleteResumeById,
+} from '../controllers/resume.controller.js';
 
-  //route for fetching all users 
-  router.get("/users", resumes.findAllUsers);
+export const resumeRouter = express.Router();
 
+<<<<<<< HEAD
   // Create a new Resumes
   router.post("/create", resumes.create);
 
@@ -43,3 +47,11 @@ module.exports = (app) => {
 
   app.use("/api/resumes", router);
 };
+=======
+// Routes
+resumeRouter.post('/', createResume); // Create a new resume
+resumeRouter.get('/', getAllResumes); // Get all resumes
+resumeRouter.get('/:id', getResumeById); // Get a specific resume by ID
+resumeRouter.put('/:id', updateResume); // Update a resume by ID
+resumeRouter.delete('/:id', deleteResumeById); // Delete a resume by ID
+>>>>>>> 8462108383c0038fafd714df1eb6546c69182b8a
