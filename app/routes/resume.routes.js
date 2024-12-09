@@ -19,6 +19,11 @@ module.exports = (app) => {
   // Update a resume
   router.put("/:id", resumes.update);
 
+  // Delete a Resume with id
+  router.delete("/:id", resumes.deleteResume);
+
+
+
   // Retrieve all Resumes
   //router.get("/", resumes.findAll);
 
@@ -31,8 +36,7 @@ module.exports = (app) => {
   // Update a Resume with id
   //router.put("/:id",resumes.update);
 
-  // Delete a Resume with id
-  //router.delete("/:id", resumes.delete);
+
 
   // Create a new Resumes
   //router.delete("/", resumes.deleteAll);

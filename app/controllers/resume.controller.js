@@ -130,26 +130,40 @@ exports.getUserResumes = async (req, res) => {
 
 //fetch a resume with associiated table
 
+
 exports.findOne = async (req, res) => {
   try {
     const resume_id = req.params.id;
 
-    const resume = await Resume.findByPk(resume_id, {
-      include: [
-        { model: Education },
-        { model: Experience },
-        { model: Project },
-        { model: Skill },
-        { model: Interest },
-        { model: Award },
-      ],
+    // Fetch resume data
+    const resume = await Resume.findOne({
+      where: { resume_id },
     });
 
     if (!resume) {
       return res.status(404).send({ message: "Resume not found" });
     }
 
-    res.status(200).send(resume);
+    // Fetch related data manually using resume_id as the foreign key
+    const education = await Education.findAll({ where: { resume_id } });
+    const experience = await Experience.findAll({ where: { resume_id } });
+    const project = await Project.findAll({ where: { resume_id } });
+    const skill = await Skill.findAll({ where: { resume_id } });
+    const interest = await Interest.findAll({ where: { resume_id } });
+    const award = await Award.findAll({ where: { resume_id } });
+
+    // Combine all data into a single response
+    const response = {
+      resume,
+      education,
+      experience,
+      project,
+      skill,
+      interest,
+      award,
+    };
+
+    res.status(200).send(response);
   } catch (error) {
     console.error("Error fetching resume:", error);
     res.status(500).send({
@@ -161,16 +175,16 @@ exports.findOne = async (req, res) => {
 // Update an existing Resume and its associated data
 exports.update = async (req, res) => {
   try {
-    const { id } = req.params; // Extract resume_id from the request params
-    const { resume_name, template_type, intro_paragraph, education, experience, project, skills, interests, awards } = req.body;
+   const id = req.params.id; // Extract resume_id from the request params
+    const { resume_name, template_type, intro_paragraph, education, experience, project, skill, interest, award } = req.body;
 
     // Validate request
-    if (!resume_name) {
+    if (!req.body.resume_name) {
       return res.status(400).send({ message: "Resume name cannot be empty!" });
     }
 
     // Find the resume by id
-    const resume = await Resume.findByPk(id);
+    const resume = await Resume.findByPk(id );
     if (!resume) {
       return res.status(404).send({ message: "Resume not found" });
     }
@@ -222,10 +236,10 @@ exports.update = async (req, res) => {
     }
 
     // Update or Create Skills
-    if (skills) {
+    if (skill) {
       const existingSkills = await Skill.findOne({ where: { resume_id: id } });
       if (existingSkills) {
-        await existingSkills.update(skills);
+        await existingSkills.update(skill);
       } else {
         await Skill.create({
           resume_id: id,
@@ -235,10 +249,10 @@ exports.update = async (req, res) => {
     }
 
     // Update or Create Interests
-    if (interests) {
+    if (interest) {
       const existingInterests = await Interest.findOne({ where: { resume_id: id } });
       if (existingInterests) {
-        await existingInterests.update(interests);
+        await existingInterests.update(interest);
       } else {
         await Interest.create({
           resume_id: id,
@@ -248,10 +262,10 @@ exports.update = async (req, res) => {
     }
 
     // Update or Create Awards
-    if (awards) {
+    if (award) {
       const existingAwards = await Award.findOne({ where: { resume_id: id } });
       if (existingAwards) {
-        await existingAwards.update(awards);
+        await existingAwards.update(award);
       } else {
         await Award.create({
           resume_id: id,
@@ -265,6 +279,39 @@ exports.update = async (req, res) => {
     console.error("Error updating resume:", err);
     res.status(500).send({
       message: err.message || "Some error occurred while updating the Resume.",
+    });
+  }
+};
+
+
+
+exports.deleteResume = async (req, res) => {
+  try {
+    const resume_id = req.params.id;
+
+    // Check if the resume exists
+    const resume = await Resume.findOne({ where: { resume_id } });
+
+    if (!resume) {
+      return res.status(404).send({ message: "Resume not found" });
+    }
+
+    // Delete associated data from all tables
+    await Education.destroy({ where: { resume_id } });
+    await Experience.destroy({ where: { resume_id } });
+    await Project.destroy({ where: { resume_id } });
+    await Skill.destroy({ where: { resume_id } });
+    await Interest.destroy({ where: { resume_id } });
+    await Award.destroy({ where: { resume_id } });
+
+    // Finally, delete the resume itself
+    await Resume.destroy({ where: { resume_id } });
+
+    res.status(200).send({ message: "Resume and all associated data deleted successfully." });
+  } catch (error) {
+    console.error("Error deleting resume:", error);
+    res.status(500).send({
+      message: error.message || "Error deleting the resume",
     });
   }
 };
